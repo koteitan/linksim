@@ -82,3 +82,22 @@ XorShift.test = function(seed){
   str+=" min="+minx;
   return str;
 }
+/* solve ax^2+bx+c=0.
+ * retval = [x0,x1]
+ * x0=-b+sqrt(b^2-4ac)/2a
+ * x1=-b-sqrt(b^2-4ac)/2a
+ * retval = [] if there is no solution.
+ * */
+var solvequad(a,b,c){
+  if(a==0){
+    /* bx+c=0 x=-c/b */
+    return -c/b;
+  }else{
+    var sqrt=b*b-4*a*c;
+    sqrt=Math.sqrt(sqrt);
+    if(sqrt<0) return [];
+    var inv2a=1/2a;
+    return [(-b+sqrt)*inv2a,(-b-sqrt)*inv2a)];
+  }
+}
+
