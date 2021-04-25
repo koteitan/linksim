@@ -26,9 +26,12 @@ var transpose = function(a){
     }
   }
 }
+var det = function(a){
+  return a[0][0]*a[1][1]-a[0][1]*a[1][0];
+}
 var inv = function(a){
   if(a.length==2){
-    var det = a[0][0]*a[1][1]-a[0][1]*a[1][0];
+    var det = det(a);
     if(det==0) return [[NaN,NaN],[NaN,NaN] ];
     var invdet = 1/det;
     return [
