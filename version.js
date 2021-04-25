@@ -1,10 +1,5 @@
-document.getElementById("versiondisplay").innerHTML = "0.3";
+document.getElementById("versiondisplay").innerHTML = "0.01";
 document.getElementById("changelog").innerHTML = 
-"<ul>"+
-"<li>2018/05/31 trial for parsing sheet.</li>"+
-"<li>2018/06/11 start implementation of Maps.</li>"+
-"</ul>";
+"<table align='right'><tr><td style='text-align:right'>2021/04/25 20:00 JST</td><td>&nbsp;</td><td>started coding.</td></tr></table>";
 document.getElementById("knownbugs").innerHTML = 
-"<ul>"+
-"<li>under construction</li>"+
-"</ul>";
+"<table align='right'><tr><td style='text-align:right'>under construction.</td></tr></table>";
