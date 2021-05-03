@@ -25,7 +25,7 @@ var initLink=function(){
       [  0,   0],
       [ -7, +13],
       [-60, +30],
-      [-30, -50],
+      [-38, -7.8],
       [-40, -10],
       [-80, -20],
       [-70, -65],
@@ -36,6 +36,7 @@ var initLink=function(){
       [1,2,50],
       [1,3,61.9],
       [2,4,41.5],
+      [3,4,39.3],
       [2,5,55.8],
       [3,6,36.7],
       [3,7,49.0],
@@ -51,7 +52,8 @@ var initLink=function(){
   ]);
 };
 var procLink=function(){
-  mainlink.angle+=10/180*Math.PI;
+  mainlink.angle+=5/180*Math.PI;
+  if(mainlink.angle>360)mainlink.angle-=360;
   mainlink.calcpos();
 }
 /* continued from main(). */
@@ -64,7 +66,7 @@ var procAll=function(){
   procEvent();
   if(isRequestedDraw){
     procDraw();
-    isRequestedDraw = false;
+    isRequestedDraw = true;
   }
 }
 var initHtml=function(){
@@ -242,22 +244,22 @@ Net.prototype.calcpos=function(){
   for(var i=0;i<nodes;i++)done[i]=false;
   //set pos of fixed
     for(var f=0;f<this.fixed.length;f++){
-      pos[this.fixed[f]]=this.fixpos[i];
+      pos[this.fixed[f]]=this.fixpos[f].clone();
       done[this.fixed[f]]=true;
     }
   //set pos of sat
+  done[sat]=true;
   var satsunlen=this.getlength(sat,sun);
   pos[sat]=[
     satsunlen*Math.cos(this.angle),
     satsunlen*Math.sin(this.angle)
   ];
-  done[sun]=true;
 
   //iterate others
   do{
     var isloop=false;
     for(var i=0;i<nodes;i++){
-      if(!done[i]){
+      if(!done[i]){//not yet
         //find i in edge
         var to=[];
         var len=[];
@@ -286,11 +288,11 @@ Net.prototype.calcpos=function(){
           var oldpos=this.pos[i];
           pos[i] = (abs2(sub(pp,oldpos))<abs2(sub(pm,oldpos)))?pp:pm;
           done[i] = true;
-        }else{
         }
       }
     }
-  }while(isloop);
+  }while(done.includes(false));
+  this.pos=pos.clone();
 }
 Net.prototype.getlength=function(a,b){
   for(var i=0;i<this.edge.length;i++){
