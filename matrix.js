@@ -218,6 +218,13 @@ var abs = function(a){
   }
   return Math.sqrt(n);
 };
+var abs2 = function(a){
+  var n = 0;
+  for(var i=0;i<a.length;i++){
+    n += a[i]*a[i];
+  }
+  return n;
+};
 
 var normalize=function(a){
   var invabs = 1/abs(a);
