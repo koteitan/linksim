@@ -17,19 +17,19 @@ window.onload = function(){
 var mainlink;
 var initLink=function(){
   //init world
-  var m = 0.1; //default margin
-  gW = new Geom(2,[[0-m,0-m],[1+m,1+m]]);
+  var m = 0; //default margin
+  gW = new Geom(2,[[-150-m,-150-m],[50+m,50+m]]);
   //init example net
   mainlink = new Net([
     [//pos[i]=[x,y]
-      [0,0],
-      [-7,13],
-      [-6,3],
-      [-3,-5],
-      [-4,-1],
-      [-8,-2],
-      [-7,-6.5],
-      [0,-10],
+      [  0,   0],
+      [ -7, +13],
+      [-60, +30],
+      [-30, -50],
+      [-40, -10],
+      [-80, -20],
+      [-70, -65],
+      [  0,-100],
     ],
     [ //edge[i]=[from,to,(len)]
       [0,1,15],
@@ -50,12 +50,17 @@ var initLink=function(){
     Math.PI/3*2,//angle
   ]);
 };
+var procLink=function(){
+  mainlink.angle+=10/180*Math.PI;
+  mainlink.calcpos();
+}
 /* continued from main(). */
 var initMaps2=function(res){
   isRequestedDraw = true;
 }
 //game loop ------------------
 var procAll=function(){
+  procLink();
   procEvent();
   if(isRequestedDraw){
     procDraw();
@@ -75,7 +80,7 @@ window.onresize = function(){ //browser resize
   var wx,wy;
   var agent = navigator.userAgent;
   var wx= [(document.documentElement.clientWidth-10)*0.99, 320].max();
-  var wy= [(document.documentElement.clientHeight-200), 20].max();
+  var wy= [(document.documentElement.clientHeight-300), 20].max();
   document.getElementById("outcanvas").width = wx;
   document.getElementById("outcanvas").height= wy;
   renewgS();
@@ -92,7 +97,7 @@ var fontsize = 15;
 var radius = 15;
 var isRequestedDraw = true;
 var isSheetLoaded = false;
-var frameRate = 60; //[fps]
+var frameRate = 30; //[fps]
 //init
 var initDraw=function(){
   can = document.getElementById("outcanvas");
@@ -146,6 +151,25 @@ var procDraw = function(){
   }//d
 
   //draw nodes
+  for(var i=0;i<mainlink.pos.length;i++){
+    var s=transPos(mainlink.pos[i],gW,gS);
+    ctx.beginPath();
+    ctx.fillStyle="black";
+    if(i==mainlink.fixed) ctx.fillStyle="red";
+    if(i==mainlink.sat  ) ctx.fillStyle="blue";
+    ctx.arc(s[0],s[1],2,0,Math.PI*2,false);
+    ctx.fill();
+  }
+  //draw edges
+  for(var i=0;i<mainlink.edge.length;i++){
+    var s0=transPos(mainlink.pos[mainlink.edge[i][0]],gW,gS);
+    var s1=transPos(mainlink.pos[mainlink.edge[i][1]],gW,gS);
+    ctx.strokeStyle="black";
+    ctx.beginPath();
+    ctx.moveTo(s0[0],s0[1]);
+    ctx.lineTo(s1[0],s1[1]);
+    ctx.stroke();
+  }
 }
 //event---------------------
 var downpos=[-1,-1];// start of drag
@@ -208,27 +232,26 @@ var Net=function(json){
     }
   }
 }
-
 Net.prototype.calcpos=function(){
   var sat=this.sat;
   var sun=this.sun;
+  var nodes=this.pos.length;
   var edges=this.edge.length;
-  var nodes=this.edge.max().max();
   var pos=new Array(nodes); //new position
   var done=new Array(nodes);
   for(var i=0;i<nodes;i++)done[i]=false;
   //set pos of fixed
-  this.fixed.foreach(function(f,i){
-    pos[f]=this.fixpos[i];
-    done[f]=true;
-  });
+    for(var f=0;f<this.fixed.length;f++){
+      pos[this.fixed[f]]=this.fixpos[i];
+      done[this.fixed[f]]=true;
+    }
   //set pos of sat
   var satsunlen=this.getlength(sat,sun);
   pos[sat]=[
     satsunlen*Math.cos(this.angle),
     satsunlen*Math.sin(this.angle)
   ];
-  done[san]=true;
+  done[sun]=true;
 
   //iterate others
   do{
@@ -268,6 +291,15 @@ Net.prototype.calcpos=function(){
       }
     }
   }while(isloop);
+}
+Net.prototype.getlength=function(a,b){
+  for(var i=0;i<this.edge.length;i++){
+    if((this.edge[i][0]==a && this.edge[i][1]==b)||
+       (this.edge[i][0]==b && this.edge[i][1]==a)){
+      return this.edge[i][2];
+    }
+  }
+  return -1;
 }
 
 
