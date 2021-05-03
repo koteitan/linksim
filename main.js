@@ -21,7 +21,17 @@ var initLink=function(){
   gW = new Geom(2,[[0-m,0-m],[1+m,1+m]]);
   //init example net
   mainlink = new Net([
-    [//edge[i]=[from,to,len]
+    [//pos[i]=[x,y]
+      [0,0],
+      [-7,13],
+      [-6,3],
+      [-3,-5],
+      [-4,-1],
+      [-8,-2],
+      [-7,-6.5],
+      [0,-10],
+    ],
+    [ //edge[i]=[from,to,(len)]
       [0,1,15],
       [1,2,50],
       [1,3,61.9],
@@ -37,7 +47,7 @@ var initLink=function(){
     [[0,0],[-38.0,+7.8]],//fixedpos
     0,//sun
     1,//sat
-    0,//angle
+    Math.PI/3*2,//angle
   ]);
 };
 /* continued from main(). */
@@ -173,11 +183,13 @@ var Net=function(json){
   if(typeof json!="undefined"){
     var obj=JSON.parse(json);
     var i=0;
+    this.pos = obj[i++];
+      /* pos[i][{0,1}] = {x,y} positon of the ith node.*/
     this.edge = obj[i++]; 
       /* edge[i] = [from,to,len]
        *  from = node index the node had the ith edge from
        *  to   = node index the node had the ith edge to
-       *  len  = length of the ith edge */
+       *  len  = length of the ith edge (caluculated by pos if there is no info) */
     this.fixed  = obj[i++]; /* fixed[i] = the index of ith fixed node. */
     this.fixpos = obj[i++]; /* fixed[i][{0,1}] = {x,y} position of the ith fixed node. */
     this.sun    = obj[i++]; /* sat      = the index of ith satellite node. */
@@ -187,6 +199,14 @@ var Net=function(json){
        * to be the motion source.*/
     this.angle  = obj[i++]; /* angle = the angle in radian of the satellite node. */
   }
+  for(var i=0;i<this.edge.length;i++){
+    if(this.edge[i].length==2){//if there is no len
+      //make len from pos
+      var p0=this.pos[this.edge[i][0]];
+      var p1=this.pos[this.edge[i][1]];
+      this.edge[i].push(Math.sqrt((p1[0]-p0[0])*(p1[0]-p0[0])+(p1[1]-p0[1])*(p1[1]-p0[1])));
+    }
+  }
 }
 
 var Net.prototype.calcpos=function(){
@@ -194,7 +214,7 @@ var Net.prototype.calcpos=function(){
   var sun=this.sun;
   var edges=this.edge.length;
   var nodes=this.edge.max().max();
-  var pos=new Array(nodes);
+  var pos=new Array(nodes); //new position
   var done=new Array(nodes);
   for(var i=0;i<nodes;i++)done[i]=false;
   //set pos of fixed
@@ -250,8 +270,12 @@ var Net.prototype.calcpos=function(){
           var R=(R0*R0+R1*R1)/2;
           /* 
             ym=(R-xmX)/Y
-            (1+X^2/Y^2)xm^2+xm(-2X0+2XY0/Y)-2RY0/Y+Y0^2+X0^2+R^2/Y^2-R0^2=0
+            xm^2-2xmX0+X0^2+((R-xmX)/Y)^2-2((R-xmX)/Y)Y0+Y0^2=R0^2
+            xm^2-2xmX0+X0^2+R^2+xm^2X^2/Y^2-2RxmX/Y-2((R-xmX)/Y)Y0+Y0^2=R0^2
+            xm^2-2xmX0+X0^2+R^2+xm^2X^2/Y^2-2RxmX/Y-2RY0/Y+2xmXY0/Y+Y0^2=R0^2
+            (1+X^2/Y^2)xm^2+xm(-2X0-2RX/Y+2XY0/Y)+X0^2+R^2-2RY0/Y+Y0^2-R0^2=0
           */
+          [xmp0,xmp1]=solvequad(1+X*X/Y*Y, 2*(X0+(Y0-R)*X/Y), X0*X0+R*R-R0*R0+Y0*Y0-2R*Y0/Y);
           done[i]==true;
         }else{
         }
