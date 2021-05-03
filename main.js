@@ -209,7 +209,7 @@ var Net=function(json){
   }
 }
 
-var Net.prototype.calcpos=function(){
+Net.prototype.calcpos=function(){
   var sat=this.sat;
   var sun=this.sun;
   var edges=this.edge.length;
@@ -225,8 +225,8 @@ var Net.prototype.calcpos=function(){
   //set pos of sat
   var satsunlen=this.getlength(sat,sun);
   pos[sat]=[
-    satsunlen*Math.cos(this.angle);
-    satsunlen*Math.sin(this.angle);
+    satsunlen*Math.cos(this.angle),
+    satsunlen*Math.sin(this.angle)
   ];
   done[san]=true;
 
@@ -249,34 +249,20 @@ var Net.prototype.calcpos=function(){
           }
         }
         if(to.length==2){
-          var X0=pos[to[0]][0];
-          var Y0=pos[to[0]][1];
-          var xm=pos[i][0];
-          var ym=pos[i][1];
-          var X1=pos[to[1]][0];
-          var Y1=pos[to[1]][1];
+          var P0=pos[to[0]];
+          var P1=pos[to[1]];
           var R0=len[0];
           var R1=len[1];
-          /*
-            (xm-X0)^2+(ym-Y0)^2=R0^2
-            (xm-X1)^2+(ym-Y1)^2=R1^2
-            xm^2-2xmX0+X0^2+ym^2-2ymY0+Y0^2=R0^2
-            xm^2-2xmX1+X1^2+ym^2-2ymY1+Y1^2=R1^2
-            xm(X0+X1)+ym(Y0+Y1)=(R0^2+R1^2)/2
-            xmX+ymY=R
-           */
-          var X=X0+X1;
-          var Y=Y0+Y1;
-          var R=(R0*R0+R1*R1)/2;
-          /* 
-            ym=(R-xmX)/Y
-            xm^2-2xmX0+X0^2+((R-xmX)/Y)^2-2((R-xmX)/Y)Y0+Y0^2=R0^2
-            xm^2-2xmX0+X0^2+R^2+xm^2X^2/Y^2-2RxmX/Y-2((R-xmX)/Y)Y0+Y0^2=R0^2
-            xm^2-2xmX0+X0^2+R^2+xm^2X^2/Y^2-2RxmX/Y-2RY0/Y+2xmXY0/Y+Y0^2=R0^2
-            (1+X^2/Y^2)xm^2+xm(-2X0-2RX/Y+2XY0/Y)+X0^2+R^2-2RY0/Y+Y0^2-R0^2=0
-          */
-          [xmp0,xmp1]=solvequad(1+X*X/Y*Y, 2*(X0+(Y0-R)*X/Y), X0*X0+R*R-R0*R0+Y0*Y0-2R*Y0/Y);
-          done[i]==true;
+          var P1sP0=sub(P1,P0);
+          var R01_2=abs2(P1sP0);
+          var R01  =Math.sqrt(R01_2);
+          var cos=(R01_2+R0*R0-R1*R1)/(2*R01*R0);
+          var sin=Math.sqrt(1-cos*cos);
+          var pp=add(mulkv(R0/R01, mulxv([[cos,-sin],[+sin,cos]],P1sP0)),P0);
+          var pm=add(mulkv(R0/R01, mulxv([[cos,+sin],[-sin,cos]],P1sP0)),P0);
+          var oldpos=this.pos[i];
+          pos[i] = (abs2(sub(pp,oldpos))<abs2(sub(pm,oldpos)))?pp:pm;
+          done[i] = true;
         }else{
         }
       }
