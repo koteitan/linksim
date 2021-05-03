@@ -22,30 +22,29 @@ var initLink=function(){
   //init example net
   mainlink = new Net([
     [//pos[i]=[x,y]
-      [  0,   0],
-      [ -7, +13],
-      [-60, +30],
-      [-38, -7.8],
-      [-40, -10],
-      [-80, -20],
-      [-70, -65],
-      [  0,-100],
+      [  0,   0], //0
+      [ -7, +13], //1
+      [-60, +30], //2
+      [-30, -50], //3
+      [-38, -7.8],//4
+      [-85, -20], //5
+      [-70, -65], //6
+      [  0,-100], //7
     ],
     [ //edge[i]=[from,to,(len)]
-      [0,1,15],
-      [1,2,50],
-      [1,3,61.9],
-      [2,4,41.5],
-      [3,4,39.3],
-      [2,5,55.8],
-      [3,6,36.7],
-      [3,7,49.0],
-      [4,5,40.1],
-      [5,6,39.4],
-      [6,7,65.7],
+      [0,1, 15.0],
+      [1,2, 50.0],
+      [1,3, 61.9],
+      [2,4, 41.5],
+      [3,4, 39.3],
+      [4,5, 40.1],
+      [2,5, 55.8],
+      [3,6, 36.7],
+      [5,6, 39.4],
+      [3,7, 49.0],
+      [6,7, 65.7],
     ],//link
     [0,4],//fixed
-    [[0,0],[-38.0,+7.8]],//fixedpos
     0,//sun
     1,//sat
     Math.PI/3*2,//angle
@@ -152,25 +151,26 @@ var procDraw = function(){
     }//depth
   }//d
 
-  //draw nodes
-  for(var i=0;i<mainlink.pos.length;i++){
-    var s=transPos(mainlink.pos[i],gW,gS);
-    ctx.beginPath();
-    ctx.fillStyle="black";
-    if(i==mainlink.fixed) ctx.fillStyle="red";
-    if(i==mainlink.sat  ) ctx.fillStyle="blue";
-    ctx.arc(s[0],s[1],2,0,Math.PI*2,false);
-    ctx.fill();
-  }
   //draw edges
   for(var i=0;i<mainlink.edge.length;i++){
     var s0=transPos(mainlink.pos[mainlink.edge[i][0]],gW,gS);
     var s1=transPos(mainlink.pos[mainlink.edge[i][1]],gW,gS);
     ctx.strokeStyle="black";
+    ctx.lineWidth=5;
     ctx.beginPath();
     ctx.moveTo(s0[0],s0[1]);
     ctx.lineTo(s1[0],s1[1]);
     ctx.stroke();
+  }
+  //draw nodes
+  for(var i=0;i<mainlink.pos.length;i++){
+    var s=transPos(mainlink.pos[i],gW,gS);
+    ctx.beginPath();
+    ctx.fillStyle="black";
+    if(mainlink.fixed.includes(i)) ctx.fillStyle="red";
+    if(i==mainlink.sat  ) ctx.fillStyle="blue";
+    ctx.arc(s[0],s[1],10,0,Math.PI*2,false);
+    ctx.fill();
   }
 }
 //event---------------------
@@ -198,7 +198,7 @@ var handleMouseWheel = function(){
   var oldw=gW.w.clone();
   for(var i=0;i<2;i++){
     for(var d=0;d<2;d++){
-      gW.w[i][d] = (oldw[i][d]-pos[d])*Math.pow(1.1, -mouseWheel[1]/1000)+pos[d];
+      gW.w[i][d] = (oldw[i][d]-pos[d])*Math.pow(2.1, -mouseWheel[1]/1000)+pos[d];
     }
   }
   gW.recalc();
@@ -217,7 +217,6 @@ var Net=function(json){
        *  to   = node index the node had the ith edge to
        *  len  = length of the ith edge (caluculated by pos if there is no info) */
     this.fixed  = obj[i++]; /* fixed[i] = the index of ith fixed node. */
-    this.fixpos = obj[i++]; /* fixed[i][{0,1}] = {x,y} position of the ith fixed node. */
     this.sun    = obj[i++]; /* sat      = the index of ith satellite node. */
       /* "the sun node" is the node satellite node rotate around. */
     this.sat    = obj[i++]; /* sat      = the index of ith satellite node. */
@@ -244,7 +243,7 @@ Net.prototype.calcpos=function(){
   for(var i=0;i<nodes;i++)done[i]=false;
   //set pos of fixed
     for(var f=0;f<this.fixed.length;f++){
-      pos[this.fixed[f]]=this.fixpos[f].clone();
+      pos[this.fixed[f]]=this.pos[this.fixed[f]].clone();
       done[this.fixed[f]]=true;
     }
   //set pos of sat
