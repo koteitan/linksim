@@ -24,22 +24,18 @@
   hr{border-style:solid}
   canvas{padding:0px;margin:0px}
   .console{font-family:MS Gothic;color:white;background-color:black}
+  .flexwrapparent{display:flex;flex-wrap:wrap}
   --></style>
 </head>
 <body>
 <h2>Linksim - mechanical linkage simulator online</h2>
-<canvas id="outcanvas" width=600px height=600px style="border-style:solid"></canvas><br>
-
-<form name="form0">
-locale: <input type=radio name='locale' value=en onchange="javascript:changelocale();">English
-  <input type=radio name='locale' value=ja onchange="javascript:changelocale();">Japanese
-</form>
-<address id="address">Linksim version <span id="versiondisplay"></span><br>
+<div class='flexwrapparent'>
+<canvas id="incanvas" width=600px height=600px style="border-style:solid"></canvas>
+<canvas id="outcanvas" width=600px height=600px style="border-style:solid"></canvas>
+</div>
+<address id="address">Linksim version v0.1<br>
 programmed by <a href='https://twitter.com/koteitan/'>koteitan</a> code at <a href='https://github.com/koteitan/linksim/'>github</a><br>
-<div id="changelog"></div><br clear='all'>
-<div id="knownbugs"></div><br clear='all'>
 </address>
 <textarea id="debug" cols=50 rows=10 style='display:none'></textarea>
-<script type="text/javascript" src="./version.js"></script>
 </body>
 </html>

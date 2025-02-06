@@ -18,19 +18,31 @@ var mousePos     = [-1,-1];
 var mouseUpPos   = [-1,-1];
 var isKeyTyping;
 //init
-var initEvent = function(can){
+var initEvent = function(canin,canout){
   eventQueue = [];
-  can.ontouchstart = addTouchEvent;
-  can.ontouchmove  = addTouchEvent;
-  can.ontouchend   = addTouchEvent;
-  can.onmousedown  = addEvent;
-  can.onmousemove  = addEvent;
-  can.onmouseup    = addEvent;
-  can.onmouseout   = addEvent;
-  can.onmousewheel = addEvent;
+  canin.ontouchstart = addTouchEventIn;
+  canin.ontouchmove  = addTouchEventIn;
+  canin.ontouchend   = addTouchEventIn;
+  canin.onmousedown  = addEventIn;
+  canin.onmousemove  = addEventIn;
+  canin.onmouseup    = addEventIn;
+  canin.onmouseout   = addEventIn;
+  canin.onmousewheel = addEventIn;
+  canout.ontouchstart = addTouchEventOut;
+  canout.ontouchmove  = addTouchEventOut;
+  canout.ontouchend   = addTouchEventOut;
+  canout.onmousedown  = addEventOut;
+  canout.onmousemove  = addEventOut;
+  canout.onmouseup    = addEventOut;
+  canout.onmouseout   = addEventOut;
+  canout.onmousewheel = addEventOut;
 //  window.onkeydown       = addEvent;
 };
 // addEvent(Event e)
+var addEventIn = function(e){e.target=canin;addEvent(e);}
+var addEventOut = function(e){e.target=canout;addEvent(e);}
+var addTouchEventIn = function(e){e.target=canin;addTouchEvent(e);}
+var addTouchEventOut = function(e){e.target=canout;addTouchEvent(e);}
 var addEvent = function(e){
   if(e.type=="mousewheel"){
     var a=1;

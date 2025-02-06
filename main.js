@@ -1,26 +1,22 @@
 // fields--------------------
-// maps
-var maps;
-var spreadsheetId = "11WH6PrhFAcdMEWSTjxSjZ7_rWHg-b8shAvSFn99bdyQ"; // for live
-//var spreadsheetId = "1foxx3dOYDwnyqQsxmhmcWV93xvCzOxX73GCg8Bv-kg0";
 var gW; /* world coordinate */
 //entry point--------------------
 window.onload = function(){
   initHtml(); //get locale option
   initLink(); //use local option
   initDraw();
-  initEvent(can);
+  initEvent(canin,canout);
   window.onresize(); //after loading maps
   setInterval(procAll, 1000/frameRate); //enter gameloop
 }
 //maps-------------------
-var mainlink;
+var outlink;
 var initLink=function(){
   //init world
   var m = 0; //default margin
   gW = new Geom(2,[[-150-m,-150-m],[50+m,50+m]]);
   //init example net
-  mainlink = new Net([
+  inlink = new Net([
     [//pos[i]=[x,y]
       [  0,   0], //0
       [ -7, +13], //1
@@ -49,11 +45,25 @@ var initLink=function(){
     1,//sat
     Math.PI/3*2,//angle
   ]);
+  outlink = new Net(inlink);
+  applylink();
+  outlink.calcpos("third");
+  outlink.edge = inlink.edge.clone();
 };
+var applylink=function(){
+  var pos = inlink.pos.clone();
+  var edge = [];
+  for(var i=0;i<inlink.pos.length;i++){
+    for(var j=i+1;j<inlink.pos.length;j++){
+      edge.push([i,j,abs(sub(inlink.pos[i],inlink.pos[j]))]);
+    }
+  }
+  outlink.edge = edge;
+}
 var procLink=function(){
-  mainlink.angle+=5/180*Math.PI;
-  if(mainlink.angle>360)mainlink.angle-=360;
-  mainlink.calcpos();
+  outlink.angle+=5/180*Math.PI;
+  if(outlink.angle>360)outlink.angle-=360;
+  outlink.calcpos("prev");
 }
 /* continued from main(). */
 var initMaps2=function(res){
@@ -64,15 +74,13 @@ var procAll=function(){
   procLink();
   procEvent();
   if(isRequestedDraw){
-    procDraw();
+    procDraw(canin,ctxin,inlink);
+    procDraw(canout,ctxout,outlink);
     isRequestedDraw = true;
   }
 }
 var initHtml=function(){
   debug = document.getElementById('debug');
-  if(navigator.language=='ja'){
-    document.getElementsByName('locale')[1].checked = true;
-  }
 }
 
 // html ----------------------------
@@ -80,19 +88,21 @@ var debug;
 window.onresize = function(){ //browser resize
   var wx,wy;
   var agent = navigator.userAgent;
-  var wx= [(document.documentElement.clientWidth-10)*0.99, 320].max();
-  var wy= [(document.documentElement.clientHeight-300), 20].max();
-  document.getElementById("outcanvas").width = wx;
-  document.getElementById("outcanvas").height= wy;
+  var wx= [(canin.getBoundingClientRect().width  -10)*0.99, 320].max();
+  var wy= [(canin.getBoundingClientRect().height-300)*0.99,  20].max();
+  var w = [wx,wy].max();
+  canin.width = w;
+  canin.height= w;
+  canout.width = w;
+  canout.height= w;
   renewgS();
   isRequestedDraw = true;
 };
-var changelocale=function(){ // form option button
-  isRequestedDraw = true;
-}
 // graphics ------------------------
-var ctx;
-var can;
+var ctxin;
+var canin;
+var ctxout;
+var canout;
 var gS;
 var fontsize = 15;
 var radius = 15;
@@ -101,17 +111,18 @@ var isSheetLoaded = false;
 var frameRate = 30; //[fps]
 //init
 var initDraw=function(){
-  can = document.getElementById("outcanvas");
-  ctx = can.getContext('2d');
+  canin  = document.getElementById("incanvas");
+  ctxin  = canin.getContext('2d');
+  canout = document.getElementById("outcanvas");
+  ctxout = canout.getContext('2d');
   renewgS();
 }
 var renewgS=function(){
-  var s=[[0,can.height],[can.width,0]];
+  var s=[[0,canin.height],[canin.width,0]];
   gS = new Geom(2,s);
 }
 //proc
-var procDraw = function(){
-
+var procDraw = function(can,ctx,net){
   //background
   ctx.fillStyle="white";
   ctx.fillRect(0,0,can.width, can.height);
@@ -152,9 +163,9 @@ var procDraw = function(){
   }//d
 
   //draw edges
-  for(var i=0;i<mainlink.edge.length;i++){
-    var s0=transPos(mainlink.pos[mainlink.edge[i][0]],gW,gS);
-    var s1=transPos(mainlink.pos[mainlink.edge[i][1]],gW,gS);
+  for(var i=0;i<net.edge.length;i++){
+    var s0=transPos(net.pos[net.edge[i][0]],gW,gS);
+    var s1=transPos(net.pos[net.edge[i][1]],gW,gS);
     ctx.strokeStyle="black";
     ctx.lineWidth=5;
     ctx.beginPath();
@@ -163,12 +174,12 @@ var procDraw = function(){
     ctx.stroke();
   }
   //draw nodes
-  for(var i=0;i<mainlink.pos.length;i++){
-    var s=transPos(mainlink.pos[i],gW,gS);
+  for(var i=0;i<net.pos.length;i++){
+    var s=transPos(net.pos[i],gW,gS);
     ctx.beginPath();
     ctx.fillStyle="black";
-    if(mainlink.fixed.includes(i)) ctx.fillStyle="red";
-    if(i==mainlink.sat  ) ctx.fillStyle="blue";
+    if(net.fixed.includes(i)) ctx.fillStyle="red";
+    if(i==net.sat  ) ctx.fillStyle="blue";
     ctx.arc(s[0],s[1],10,0,Math.PI*2,false);
     ctx.fill();
   }
@@ -206,7 +217,14 @@ var handleMouseWheel = function(){
 }
 
 var Net=function(json){
-  if(typeof json!="undefined"){
+  if(json instanceof Net){
+    this.pos = json.pos.clone();
+    this.edge = json.edge.clone();
+    this.fixed = json.fixed.clone();
+    this.sun   = json.sun;
+    this.sat   = json.sat;
+    this.angle = json.angle;
+  }else if(json instanceof Array){
     var obj=JSON.parse(json);
     var i=0;
     this.pos = obj[i++];
@@ -233,7 +251,7 @@ var Net=function(json){
     }
   }
 }
-Net.prototype.calcpos=function(){
+Net.prototype.calcpos=function(strategy){
   var sat=this.sat;
   var sun=this.sun;
   var nodes=this.pos.length;
@@ -272,7 +290,7 @@ Net.prototype.calcpos=function(){
             len.push(this.edge[e][2]);
           }
         }
-        if(to.length==2){
+        if(to.length>=2){
           var P0=pos[to[0]];
           var P1=pos[to[1]];
           var R0=len[0];
@@ -285,7 +303,21 @@ Net.prototype.calcpos=function(){
           var pp=add(mulkv(R0/R01, mulxv([[cos,-sin],[+sin,cos]],P1sP0)),P0);
           var pm=add(mulkv(R0/R01, mulxv([[cos,+sin],[-sin,cos]],P1sP0)),P0);
           var oldpos=this.pos[i];
-          pos[i] = (abs2(sub(pp,oldpos))<abs2(sub(pm,oldpos)))?pp:pm;
+          if(strategy=="prev"){
+            pos[i] = (abs2(sub(pp,oldpos))<abs2(sub(pm,oldpos)))?pp:pm;
+          }else if(strategy=="third"){
+            let dp=0;
+            let dm=0;
+            for(var j=0;j<to.length;j++){
+              let pj=pos[to[j]];
+              let lenj=len[j];
+              let pppj2=abs2(sub(pp,pj));
+              let pmpj2=abs2(sub(pm,pj));
+              dp+=Math.abs(pppj2-lenj*lenj);
+              dm+=Math.abs(pmpj2-lenj*lenj);
+            }
+            pos[i] = (dp<dm)?pp:pm;
+          }
           done[i] = true;
         }
       }
