@@ -87,10 +87,9 @@ var initHtml=function(){
 var debug;
 window.onresize = function(){ //browser resize
   var wx,wy;
-  var agent = navigator.userAgent;
-  var wx= [(canin.getBoundingClientRect().width  -10)*0.99, 320].max();
-  var wy= [(canin.getBoundingClientRect().height-300)*0.99,  20].max();
-  var w = [wx,wy].max();
+  var wx= [(window.innerWidth  -10)*0.93, 320].max();
+  var wy= [(window.innerHeight-300)*0.93,  20].max();
+  var w = [wx,wy].min();
   canin.width = w;
   canin.height= w;
   canout.width = w;
