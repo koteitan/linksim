@@ -71,14 +71,14 @@ var procEvent = function(){
         mouseDownPos = removeClientOffset(e);
         mousePos     = mouseDownPos.clone();
         isShiftKey   = e.shiftKey;
-        handleMouseDown();
+        handleMouseDown(e.target);
         isDragging = true;
       break;
       case "mousemove":   // mouse move ---------
         isMouseOver = true;
         mousePos = removeClientOffset(e);
         if(isDragging){
-          handleMouseDragging();
+          handleMouseDragging(e.target);
         }
       break;
       case "mouseup":   // mouse up ---------
@@ -88,7 +88,7 @@ var procEvent = function(){
           mousePos   = removeClientOffset(e);
           mouseUpPos = mousePos.clone();
           isDragging = false;
-          handleMouseUp();
+          handleMouseUp(e.target);
         }
       break;
       case "touchstart": // mouse down ---------
@@ -96,7 +96,7 @@ var procEvent = function(){
         e.y = e.touches[0].clientY;
         mouseDownPos = removeClientOffset(e);
         mousePos     = mouseDownPos.clone();
-        handleMouseDown();
+        handleMouseDown(e.target);
         isDragging = true;
       break;
       case "touchmove": // dragging ---------
@@ -104,7 +104,7 @@ var procEvent = function(){
         e.y = e.touches[0].clientY;
         mousePos   = removeClientOffset(e);
         if(isDragging){
-          handleMouseDragging();
+          handleMouseDragging(e.target);
         }
       break;
       case "touchend":   // mouse up ---------
@@ -112,7 +112,7 @@ var procEvent = function(){
           /* copied last mousePos 
            because e with touchend event doesn't
            have member e.touches */
-        handleMouseUp();
+        handleMouseUp(e.target);
         isDragging = false;
       break;
       case "keydown":   // mouse up ---------
@@ -123,7 +123,7 @@ var procEvent = function(){
         mouseTarget = parseInt(e.target.id.substr(-1));
         mouseWheel = [e.wheelDeltaX, e.wheelDeltaY];
         mousePos   = removeClientOffset(e);
-        handleMouseWheel();
+        handleMouseWheel(e.target);
       }
       break;
       default:

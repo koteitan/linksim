@@ -47,8 +47,6 @@ var initLink=function(){
   ]);
   outlink = new Net(inlink);
   applylink();
-  outlink.calcpos("third");
-  outlink.edge = inlink.edge.clone();
 };
 var applylink=function(){
   var pos = inlink.pos.clone();
@@ -59,6 +57,8 @@ var applylink=function(){
     }
   }
   outlink.edge = edge;
+  outlink.calcpos("third");
+  outlink.edge = inlink.edge.clone();
 }
 var procLink=function(){
   outlink.angle+=5/180*Math.PI;
@@ -180,29 +180,50 @@ var procDraw = function(can,ctx,net){
     ctx.fillStyle="black";
     if(net.fixed.includes(i)) ctx.fillStyle="red";
     if(i==net.sat  ) ctx.fillStyle="blue";
-    ctx.arc(s[0],s[1],10,0,Math.PI*2,false);
+    ctx.arc(s[0],s[1],radius,0,Math.PI*2,false);
     ctx.fill();
   }
 }
 //event---------------------
 var downpos=[-1,-1];// start of drag
 var movpos =[-1,-1];// while drag
-var handleMouseDown = function(){
+var isdragnodes=false;
+var dragnode=-1;
+var handleMouseDown = function(target){
   downpos = transPos(mouseDownPos,gS,gW);
   movpos[0] = downpos[0];
   movpos[1] = downpos[1];
-}
-var handleMouseDragging = function(){
-  movpos = transPos(mousePos,gS,gW);
-  for(var i=0;i<2;i++){
-    for(var d=0;d<2;d++){
-      gW.w[i][d] -= movpos[d]-downpos[d];
+  const r=transScale([radius],gS,gW)[0];
+  if(target==canin){
+    for(var i=0;i<inlink.pos.length;i++){
+      if(abs2(sub(inlink.pos[i],downpos))<r*r){
+        dragnode=i;
+        isdragnodes=true;
+        return;
+      }
     }
   }
   isRequestedDraw = true;
 }
-var handleMouseUp = function(){
+var handleMouseDragging = function(target){
+  movpos = transPos(mousePos,gS,gW);
+  if(isdragnodes){
+    inlink.pos[dragnode][0]=movpos[0];
+    inlink.pos[dragnode][1]=movpos[1];
+    applylink();
+  }else{
+    for(var i=0;i<2;i++){
+      for(var d=0;d<2;d++){
+        gW.w[i][d] -= movpos[d]-downpos[d];
+      }
+    }
+  }
   isRequestedDraw = true;
+}
+var handleMouseUp = function(target){
+  isRequestedDraw = true;
+  isdragnodes=false;
+  dragnode=-1;
 }
 var handleMouseWheel = function(){
   var pos=transPos(mousePos,gS,gW);
